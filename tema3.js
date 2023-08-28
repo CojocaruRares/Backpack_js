@@ -1,75 +1,87 @@
 
 class Backpack {
-    constructor(small, medium, big){
-        this.small = small;
-        this.medium = medium;
-        this.big = big;
-        this.currentStatus = new Map([
-            ["small", 0],
-            ["medium", 0],
-            ["big", 0],
-            ]);
+    constructor(capacities) {
+        this.capacities = capacities;
+        this.currentStatus = {};
+        for (const size in capacities) {
+            this.currentStatus[size] = 0;
+        }
+    }
+
+    canPack(item) {
+        return this.currentStatus[item] < this.capacities[item];
+    }
+
+    pack(item, index) {
+        if (!this.canPack(item)) {
+            return -1;
+        }
+        this.currentStatus[item]++;
+        this.lastPackIndex = index;
+        return this.currentStatus[item];
+    }
+
+    unpack(item) {
+        if (this.currentStatus[item] <= 0) {
+            return -2;
+        }
+        this.currentStatus[item]--;
+        return this.lastPackIndex || -1;
     }
 }
 
-class PackingService{
-    constructor(backpack){
+class PackingService {
+    constructor(backpack) {
         this.backpack = backpack;
         this.packIndex = 1;
-        this.packStatus = new Map([
-            ["small", 0],
-            ["medium", 0],
-            ["big", 0],
-            ]);
     }
-    
-    Pack(item){
+
+    pack(item) {
         if (!["small", "medium", "big"].includes(item)) {
             console.log("Invalid item size.");
             return;
         }
-        let current = this.backpack.currentStatus.get(item);
-        if( current < this.backpack[item]){
-            let nextPackIndex = this.packIndex;
-            this.packIndex++;
-            this.backpack.currentStatus.set(item, ++current);
-            this.packStatus.set(item, nextPackIndex);
-            return nextPackIndex;
+
+        if (this.backpack.canPack(item)) {
+            const newPackIndex = this.packIndex++;
+            this.backpack.pack(item, newPackIndex);
+            return newPackIndex;
         }
-        else return -1;
+
+        return -1;
     }
-    
-    Unpack(item){
+
+    unpack(item) {
         if (!["small", "medium", "big"].includes(item)) {
             console.log("Invalid item size.");
             return;
         }
-        let current = this.backpack.currentStatus.get(item);
-        let pack = this.packStatus.get(item);
-        if(current <= 0)
-            return -2;
-        else{
-            let nextPack = pack;
-            this.packStatus.set(item, --nextPack);
-            return pack;
-        }
+
+        return this.backpack.unpack(item);
     }
-    
-    Execute(actionList){
+
+    execute(actionList) {
         actionList.forEach((action) => {
-            if(action[0] === "pack")
-                console.log(this.Pack(action[1]));
-            else if (action[0] === "unpack")
-                console.log(this.Unpack(action[1]));
+            const [actionType, item] = action;
+            if (actionType === "pack") {
+                console.log(this.pack(item));
+            } else if (actionType === "unpack") {
+                console.log(this.unpack(item));
+            }
         });
     }
-    
 }
 
-let actionList = [["pack", "small"], ["pack", "big"], ["pack", "big"], ["pack", "big"], ["unpack", "big"], ["unpack", "medium"]];
-let backpack = new Backpack(8, 4, 2);
-let pack = new PackingService(backpack);
-pack.Execute(actionList);
+const capacities = {
+    small: 8,
+    medium: 4,
+    big: 2
+};
+const backpack = new Backpack(capacities);
+const actionList = [["pack", "small"], ["pack", "big"], ["pack", "big"], ["pack", "big"], ["unpack", "big"], ["unpack", "medium"]];
+const packingService = new PackingService(backpack);
+packingService.execute(actionList);
+
 
 
 
